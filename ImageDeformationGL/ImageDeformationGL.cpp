@@ -118,7 +118,7 @@ void init() {
     // load image from file
     stbi_set_flip_vertically_on_load(true);
     unsigned char* bitmap 
-        = stbi_load("/Users/SHINWOOSUB/Desktop/ImageDeformationGL/ImageDeformationGL/Sanghuni.png", &imgwidth, &imgheight, &channel, 4);
+        = stbi_load("/Users/heony/Desktop/VCL/ImageDeformation/ImageDeformationGL/Sanghuni.png", &imgwidth, &imgheight, &channel, 4);
 
     if (bitmap == NULL)
         cout << "fail";

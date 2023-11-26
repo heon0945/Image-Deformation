@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.34114.132
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageDeformationGL", "ImageDeformationGL.vcxproj", "{ABB46FDA-9BD9-428E-B142-C8686BE01C59}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Debug|x64.ActiveCfg = Debug|x64
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Debug|x64.Build.0 = Debug|x64
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Debug|x86.ActiveCfg = Debug|Win32
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Debug|x86.Build.0 = Debug|Win32
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Release|x64.ActiveCfg = Release|x64
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Release|x64.Build.0 = Release|x64
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Release|x86.ActiveCfg = Release|Win32
+		{ABB46FDA-9BD9-428E-B142-C8686BE01C59}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {376DABF1-F3C6-413B-A942-7B521E56DC8B}
+	EndGlobalSection
+EndGlobal

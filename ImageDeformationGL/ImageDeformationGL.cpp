@@ -15,8 +15,12 @@ using namespace std;
 
 
 /*
+    - 처음 프로그램 로드 시
+                    1. VS파일, SDK 변경
+                    2. 이미지 경로 변경
+
     - 이미지 변경 :
-                    이미지 파일 로드
+                    이미지 로드
                     SCR_WIDTH, SCR_HEIGHT 조절
 
     - 마우스 오른쪽 버튼 : 포인트 추가
@@ -29,7 +33,9 @@ using namespace std;
     - 下(하) 방향키 : 범위 키우기
     - 左(좌) 방향키 : 강도 높히기
     - 右(우) 방향키 : 강도 낮추기
-    
+    - 키보드 R : 범위 보이기 / 숨기기
+    - 키보드 P : 포인트 보이기 / 숨기기
+    - 키보드 Z : 효과 전/후 비교 가능
 */
 
 
@@ -53,7 +59,7 @@ float pointSize = 10;
 
 bool dragging = false;
 
-int const COUNT_CONTROL = 10; // the number of control points, 입력 받을 수 있는 최대 포인트 개수
+int const COUNT_CONTROL = 20; // the number of control points, 입력 받을 수 있는 최대 포인트 개수
 vec2 controls[COUNT_CONTROL]; // control points
 vec2 ranges[COUNT_CONTROL]; // control ranges for each point
 vec2 deformDir[COUNT_CONTROL];
@@ -64,15 +70,19 @@ int pointnum = 0; //입력 받은 포인트 개수
 float changeMovingRange = 50;
 float divInput = 5;
 int deleteIndex = -1;
+int isclicked = 1;
+int onRange = 1;
+int onPoint = 1;
+int tmpT = 0;
 
 Program deformPro;
 
 int main(void) {
-    
+
     if (!glfwInit())
         exit(EXIT_FAILURE);
-    
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Deformation", NULL, NULL);
+
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Image Deformation using fragment shader", NULL, NULL);
 
     glfwMakeContextCurrent(window);
     glewInit();
@@ -102,7 +112,7 @@ int main(void) {
         render(window);
         glfwPollEvents();
     }
-    
+
     glDeleteFramebuffers(1, &fbo);
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -112,13 +122,13 @@ void init() {
 
     // load shaders
     deformPro.loadShaders("shader.vert", "shader.frag");
-    
+
     int channel, imgwidth, imgheight; //size of image
 
     // load image from file
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* bitmap 
-        = stbi_load("/Users/heony/Desktop/VCL/ImageDeformation/ImageDeformationGL/Sanghuni.png", &imgwidth, &imgheight, &channel, 4);
+    unsigned char* bitmap
+        = stbi_load("./Sanghuni.png", &imgwidth, &imgheight, &channel, 4);
 
     if (bitmap == NULL)
         cout << "fail";
@@ -150,7 +160,7 @@ void init() {
         0, 1, 2,
         0, 2, 3
     };
- 
+
     // texture coordinates
     float texCoord[] = {
     1.0f, 1.0f,  // 우측 상단 
@@ -181,19 +191,19 @@ void init() {
     glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, textBuf);
     glVertexAttribPointer(1, 2, GL_FLOAT, 0, 0, 0);
-    
+
     // element array
-    glGenBuffers(1, &EBO); 
+    glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(triangle), triangle, GL_STATIC_DRAW);
 }
 
 void render(GLFWwindow* window) {
-    
+
     int width, height;
-    
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-   
+
     glfwGetFramebufferSize(window, &width, &height);
 
     glClearColor(0, 0, 0, 0);
@@ -205,8 +215,8 @@ void render(GLFWwindow* window) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texID);
     loc = glGetUniformLocation(deformPro.programID, "myTexture");
-    glUniform1i(loc, 0);   
-    
+    glUniform1i(loc, 0);
+
     // screen size
     loc = glGetUniformLocation(deformPro.programID, "screen");
     glUniform2fv(loc, 1, value_ptr(vec2(SCR_WIDTH, SCR_HEIGHT)));
@@ -224,10 +234,21 @@ void render(GLFWwindow* window) {
     glUniform1f(loc, divInput);
 
     loc = glGetUniformLocation(deformPro.programID, "deleteIndex");
-    glUniform1f(loc, deleteIndex);
-    
+    glUniform1i(loc, deleteIndex);
 
+    loc = glGetUniformLocation(deformPro.programID, "isclicked");
+    glUniform1i(loc, isclicked);
 
+    loc = glGetUniformLocation(deformPro.programID, "movingControl");
+    glUniform1i(loc, movingControl);
+
+    loc = glGetUniformLocation(deformPro.programID, "onRange");
+    glUniform1i(loc, onRange);
+
+    loc = glGetUniformLocation(deformPro.programID, "onPoint");
+    glUniform1i(loc, onPoint);
+
+    // -----------------------------------------------
     // index number of all control points inclued user input 
     loc = glGetUniformLocation(deformPro.programID, "pointnum");
     glUniform1i(loc, pointnum);
@@ -248,7 +269,7 @@ void render(GLFWwindow* window) {
     loc = glGetUniformLocation(deformPro.programID, "movingControl");
     glUniform1i(loc, movingControl);
 
-    glBindVertexArray(VAO);  
+    glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -266,11 +287,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     }
     else if (frameRatio < imgRatio) { // frame : longer than viewport
         float newHeight = width * SCR_HEIGHT / SCR_WIDTH;
-        glViewport(0, (height - newHeight)/2, width, (int)newHeight);
+        glViewport(0, (height - newHeight) / 2, width, (int)newHeight);
     }
     else if (frameRatio > imgRatio) { // frame : wider than viewport
         float newWidth = height * SCR_WIDTH / SCR_HEIGHT;
-        glViewport((width - newWidth)/2, 0, (int)newWidth, height);
+        glViewport((width - newWidth) / 2, 0, (int)newWidth, height);
     }
 
 }
@@ -280,6 +301,7 @@ int width, height;
 void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
 
     if (dragging == true) {
+
         ypos = height - ypos;
         float dist =
             // sqrt(pow(ranges[movingControl].x-xpos, 2) + pow(ranges[movingControl].y-ypos, 2));
@@ -291,12 +313,14 @@ void cursor_callback(GLFWwindow* window, double xpos, double ypos) {
         else { // restrict moving control point from going out of the moving range
             vec2 temp;
             // changeMovingRange : dist = x : xpos
-            temp.x = (changeMovingRange * (xpos-ranges[movingControl].x)) / dist;
-            temp.y = (changeMovingRange * (ypos-ranges[movingControl].y)) / dist;
+            temp.x = (changeMovingRange * (xpos - ranges[movingControl].x)) / dist;
+            temp.y = (changeMovingRange * (ypos - ranges[movingControl].y)) / dist;
             controls[movingControl] = vec2(ranges[movingControl] + temp);
         }
         deformDir[movingControl] = vec2(controls[movingControl] - prepo);
+
     }
+
 }
 
 void mouseClick_callback(GLFWwindow* window, int button, int action, int mods) {
@@ -318,17 +342,22 @@ void mouseClick_callback(GLFWwindow* window, int button, int action, int mods) {
             prepo = vec2(xpo, ypo);
 
             for (int i = 0; i < pointnum; i++) {
-                if (length(controls[i] - vec2(xpo, ypo)) < pointSize){
+                if (length(controls[i] - vec2(xpo, ypo)) < pointSize) {
                     movingControl = i;
                     //cout << movingControl << endl;
                     dragging = true;
+                    isclicked = 0;
                 }
             }
-        }
-        else if (action == GLFW_RELEASE)
-            dragging = false;
 
-    } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
+        }
+        else if (action == GLFW_RELEASE) {
+            dragging = false;
+            isclicked = 1;
+        }
+
+    }
+    else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
         if (action == GLFW_PRESS) {
 
             // change to frame 
@@ -347,7 +376,7 @@ void mouseClick_callback(GLFWwindow* window, int button, int action, int mods) {
                         }
                     }
                     // delete recent input point
-                    else {   
+                    else {
                         controls[i] = vec2(0, 0);
                         ranges[i] = vec2(0, 0);
                         deformDir[i] = vec2(0, 0);
@@ -359,7 +388,8 @@ void mouseClick_callback(GLFWwindow* window, int button, int action, int mods) {
             }
 
             // create new point
-            if (!earlyclicked && pointnum != COUNT_CONTROL) {
+
+            if (onPoint == 1 && !earlyclicked && pointnum != COUNT_CONTROL) {
                 controls[pointnum] = vec2(xpo, ypo);
                 ranges[pointnum] = vec2(xpo, ypo);
                 pointnum = pointnum++;
@@ -369,16 +399,20 @@ void mouseClick_callback(GLFWwindow* window, int button, int action, int mods) {
     }
 }
 
+
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{  
+{
     //ESC : 프로그램 종료
     //상하 방향키 : 범위
     //좌우 방향키 : 강도
+    //R 버튼 : range 보기 / 숨기기
+    //P 버튼 : Point 보기 / 숨기기
+    //Z 버튼 : 원본 / 변형 비교
 
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);
     }
-    else if (pointnum > 0) {
+    else if (pointnum >= 0) {
         if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
             if (changeMovingRange < 200)
                 changeMovingRange = changeMovingRange + 10;
@@ -391,14 +425,32 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
             //cout << "You clicked DOWN key, MovingRange is     " << changeMovingRange << endl;
         }
         else if (key == GLFW_KEY_LEFT && action == GLFW_PRESS) {
-            if (divInput > 1)
-                divInput = divInput + 0.5;
+            divInput = divInput + 0.5;
             //cout << "You clicked LEFT key, divInput is     " << divInput << endl;
         }
         else if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS) {
-            divInput = divInput - 0.5;
+            if (divInput > 1)
+                divInput = divInput - 0.5;
             //cout << "You clicked RIGHT key, divInput is     " << divInput << endl;
         }
-
+        else if (key == GLFW_KEY_R && action == GLFW_PRESS) {
+            if (onRange == 1)
+                onRange = 0;
+            else onRange = 1;
+        }
+        else if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+            if (onRange == 1) {
+                if (onPoint == 1)
+                    onPoint = 0;
+                else onPoint = 1;
+            }
+        }
+        else if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+            if (pointnum > 0) {
+                tmpT = pointnum;
+                pointnum = 0;
+            }
+            else pointnum = tmpT;
+        }
     }
 }

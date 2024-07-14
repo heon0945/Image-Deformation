@@ -17,5 +17,11 @@ Set deformation weight using Gaussian equation so that pixels outside and within
 
 ![gaussian](https://github.com/user-attachments/assets/ca76d9a5-ee19-4af2-a011-0c3cf5ae6d57)
 
-###Deformed Texture coordinate calculation
+### Deformed Texture coordinate calculation
 Deformed Texture coordinate = Existing Texture coordinates - Vector * Weight * Intensity (constant)
+
+
+## Sample Output
+![specific](https://github.com/user-attachments/assets/90bc2998-9f62-49eb-bf68-618169e792f1)
+![overall](https://github.com/user-attachments/assets/de0f046e-085a-48c4-bd72-98b90a39369a)
+

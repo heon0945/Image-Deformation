@@ -1,6 +1,7 @@
 # Image-Deformation
 
 This project attempted to implement a two-dimensional Image Distortion function using OpenGL based on the C++ language, and aims to create Interactive Image Deformation haing high DOF.
+![Image](https://github.com/user-attachments/assets/b0ead393-2fb5-4382-b5d0-6e2ab4833123)
    
 ## Goal
 - High DOF User Interactive Program
